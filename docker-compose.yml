@@ -1,0 +1,24 @@
+services:
+  laya:
+    build: .
+    image: laya-local
+    ports:
+      - "127.0.0.1:8000:8000"      # localhost only; change to "8000:8000" to expose on your LAN
+    environment:
+      LAYA_MODELS: "english"       # preload only the English checkpoint (~0.8 GB). Use "english,multilingual" to add more.
+      LAYA_DEFAULT_MODEL: "english"
+      LAYA_MAX_LOADED: "1"
+      LAYA_API_KEY: "${LAYA_API_KEY:?set LAYA_API_KEY in .env}"
+      # LAYA_THREADS: "4"          # keep <= physical CPU cores
+    volumes:
+      - laya-models:/models        # keeps downloaded weights between runs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 180s           # first start downloads the model
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  laya-models:

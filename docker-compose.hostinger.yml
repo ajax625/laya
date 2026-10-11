@@ -1,0 +1,37 @@
+# Paste this into Hostinger Docker Manager > Compose > "Compose manually".
+# Before deploying, replace PASTE_YOUR_API_KEY_HERE. Do NOT commit your real key to GitHub.
+services:
+  laya:
+    image: ghcr.io/ajax625/laya:latest
+    container_name: laya
+    restart: unless-stopped
+    environment:
+      LAYA_API_KEY: "PASTE_YOUR_API_KEY_HERE"
+      LAYA_MODELS: "english"
+      LAYA_DEFAULT_MODEL: "english"
+      LAYA_MAX_LOADED: "1"
+    volumes:
+      - laya-models:/models
+    networks:
+      - proxy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 180s
+      retries: 5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.laya.rule=Host(`laya.informatrixlabs.com`)"
+      - "traefik.http.routers.laya.entrypoints=web,websecure"
+      - "traefik.http.routers.laya.tls=true"
+      - "traefik.http.routers.laya.tls.certresolver=letsencrypt"
+      - "traefik.http.services.laya.loadbalancer.server.port=8000"
+
+volumes:
+  laya-models:
+
+networks:
+  proxy:
+    external: true
